@@ -66,8 +66,13 @@ echo -e "${Info} 检测安装git、unzip、crontab工具已完成"
 sleep 1
 ##下载解压拷贝源码
 echo -e "${Info} 正在下载解压处理程序源码"
-wget -N --no-check-certificate "https://github.com/lizhongnian/ss-panel-v3-mod_Uim/archive/dev.zip"
+##wget -N --no-check-certificate "https://github.com/v2rayv3/ss-panel-v3-mod_Uim/archive/dev.zip"
+git clone https://github.com/v2rayv3/ss-panel-v3-mod_Uim.git
+wget -N --no-check-certificate "https://raw.githubusercontent.com/lizhongnian/ss-panel-v3-mod_Uim/dev/composer.json"
+wget -N --no-check-certificate "https://raw.githubusercontent.com/lizhongnian/ss-panel-v3-mod_Uim/dev/composer.lock"
+wget -N --no-check-certificate "https://raw.githubusercontent.com/lizhongnian/ss-panel-v3-mod_Uim/dev/composer.phar"
 unzip dev.zip
+cp composer.* ./ss-panel-v3-mod_Uim-dev
 cd ss-panel-v3-mod_Uim-dev
 mv * .[^.]* /www/wwwroot/$website/
 cd ..
@@ -76,12 +81,12 @@ echo -e "${Info} 下载解压处理程序源码已完成"
 sleep 1
 ##处理php函数
 echo -e "${Info} 正在处理宝塔php内容"
-sed -i 's/system,//g' /www/server/php/71/etc/php.ini
-sed -i 's/proc_open,//g' /www/server/php/71/etc/php.ini
-sed -i 's/proc_get_status,//g' /www/server/php/71/etc/php.ini
-sed -i 's/putenv,//g' /www/server/php/71/etc/php.ini
-sed -i 's/dynamic/static/g' /www/server/php/71/etc/php-fpm.conf
-sed -i 's/display_errors = On/display_errors = Off/g' /www/server/php/71/etc/php.ini
+sed -i 's/system,//g' /www/server/php/72/etc/php.ini
+sed -i 's/proc_open,//g' /www/server/php/72/etc/php.ini
+sed -i 's/proc_get_status,//g' /www/server/php/72/etc/php.ini
+sed -i 's/putenv,//g' /www/server/php/72/etc/php.ini
+sed -i 's/dynamic/static/g' /www/server/php/72/etc/php-fpm.conf
+sed -i 's/display_errors = On/display_errors = Off/g' /www/server/php/72/etc/php.ini
 echo -e "${Info} 处理宝塔php内容已完成"
 sleep 1
 ##导入数据库
@@ -108,20 +113,34 @@ sleep 1
 ##初始化站点信息
 echo -e "${Info} 正在配置站点基本信息"
 cd /www/wwwroot/$website
-cp config/.config.php.for7color config/.config.php
-sed -i "s/websiteurl/$website/g" /www/wwwroot/$website/config/.config.php
-sed -i "s/sspanel-mukey/$sspanelmukey/g" /www/wwwroot/$website/config/.config.php
-sed -i "s/sspanel-db-databasename/$mysqldatabase/g" /www/wwwroot/$website/config/.config.php
-sed -i "s/sspanel-db-username/$mysqlusername/g" /www/wwwroot/$website/config/.config.php
-sed -i "s/sspanel-db-password/$mysqlpassword/g" /www/wwwroot/$website/config/.config.php
+##cp config/.config.php.for7color config/.config.php
+cp config/.config.example.php config/.config.php
+sed -i "s/baseUrl/$website/g" /www/wwwroot/$website/config/.config.php
+sed -i "s/muKey/$sspanelmukey/g" /www/wwwroot/$website/config/.config.php
+sed -i "s/db_database/$mysqldatabase/g" /www/wwwroot/$website/config/.config.php
+sed -i "s/db_username/$mysqlusername/g" /www/wwwroot/$website/config/.config.php
+sed -i "s/db_password/$mysqlpassword/g" /www/wwwroot/$website/config/.config.php
 echo -e "${Info} 配置站点基本信息已完成"
 sleep 1
 ##下载IP解析库  下载ssr程式
+echo -e "${Info} 正在设置管理员"
+php xcat createAdmin
+sleep 1
+echo -e "${Info} 设置管理员已完成"
+sleep 1
+php xcat syncusers
 echo -e "${Info} 正在下载ip解析库"
+php xcat initQQWry
 sleep 1
 echo -e "${Info} 下载ip解析库已完成"
 sleep 1
+echo -e "${Info} 正在重置流量"
+php xcat resetTraffic
+sleep 1 
+echo -e "${Info} 重置流量已完成"
+sleep 1
 echo -e "${Info} 正在下载ssr程式"
+php xcat initdownload
 sleep 1
 echo -e "${Info} 下载ssr程式已完成"
 sleep 1
@@ -131,13 +150,15 @@ echo "30 22 * * * php /www/wwwroot/$website/xcat sendDiaryMail" >> /var/spool/cr
 echo "0 0 * * * php -n /www/wwwroot/$website/xcat dailyjob" >> /var/spool/cron/root
 echo "*/1 * * * * php /www/wwwroot/$website/xcat checkjob" >> /var/spool/cron/root
 echo "*/1 * * * * php /www/wwwroot/$website/xcat syncnode" >> /var/spool/cron/root
+echo "*/1 * * * * php /www/wwwroot/$website/xcat detectGFW" >> /var/spool/cron/root
+echo "5 0 * * * php /www/wwwroot/$website/xcat sendFinanceMail_day" >> /var/spool/cron/root
 chkconfig –level 35 crond on
 /sbin/service crond restart
 echo -e "${Info} 添加定时任务已完成"
 sleep 1
 ##重启php和nginx
 echo -e "${Info} 正在重启PHP"
-/etc/init.d/php-fpm-71 restart
+/etc/init.d/php-fpm-72 restart
 echo -e "${Info} 重启PHP已完成"
 sleep 1
 echo -e "${Info} 正在重启NGINX"
